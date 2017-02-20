@@ -59,8 +59,8 @@ node('master') {
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=testing
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=staging
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ab-template.yaml ${APP_NAME}/templates/production-template.yaml ${args} environment=production
-          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}
-          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/cd.Jenkinsfile ${APP_NAME}/cd.Jenkinsfile ${args}
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/sample-app/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/sample-app/cd.Jenkinsfile ${APP_NAME}/cd.Jenkinsfile ${args}
 
           cd ${APP_NAME}
           git add --all ./*
