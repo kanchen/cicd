@@ -55,8 +55,7 @@ node('master') {
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/sample-app ${APP_NAME} ${args}
           chmod 755 ${APP_NAME}/gradle ${APP_NAME}/gradlew
 
-          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/testing-template.yaml ${args} environment=dev
-          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=testing
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/testing-template.yaml ${args} environment=testing
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=staging
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ab-template.yaml ${APP_NAME}/templates/production-template.yaml ${args} environment=production
           ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/sample-app/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}

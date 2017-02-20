@@ -17,7 +17,7 @@ node('master') {
     def gitCredentialId = 'jenkinsGithubCredentialId'
     def nexusRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
     def nexusCredentialId = '41aebb46-b195-4957-bae0-78376aa149b0'
-    def testingTemplateName = "/templates/testing-template.yaml"
+    def testingTemplateName = "templates/testing-template.yaml"
     def testingProject = "testing"
 
     stage ('Preparation') {
