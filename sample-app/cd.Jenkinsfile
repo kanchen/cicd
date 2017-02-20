@@ -11,7 +11,7 @@ node('master') {
   def osCredentialId = 'OpenshiftCredentialId'
   def gitUrl = 'https://github.com/aceinfo-jenkins/<%= @app_name %>.git'
   def gitCredentialId = 'jenkinsGithubCredentialId'
-  def nexusRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
+  def dockerRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
   def nexusCredentialId = '41aebb46-b195-4957-bae0-78376aa149b0'
   def stagingProject = "staging"
   def productionProject = "production"
@@ -49,7 +49,7 @@ node('master') {
       } catch (Exception e) {
         sh """
           ${oc} new-project ${stagingProject} --display-name="Staging Environment"
-          ${oc} secrets new-dockercfg "nexus-${stagingProject}" --docker-server=${nexusRegistry} \
+          ${oc} secrets new-dockercfg "nexus-${stagingProject}" --docker-server=${dockerRegistry} \
             --docker-username="${env.NEXUS_USERNAME}" --docker-password="${env.NEXUS_PASSWORD}" --docker-email="docker@gitook.com"
           ${oc} secrets link default "nexus-${stagingProject}" --for=pull
           ${oc} secrets link builder "nexus-${stagingProject}" --for=pull
@@ -64,7 +64,7 @@ node('master') {
       } catch (Exception e) {
         sh """
           ${oc} new-project ${productionProject} --display-name="Production Environment"
-          ${oc} secrets new-dockercfg "nexus-${productionProject}" --docker-server=${nexusRegistry} \
+          ${oc} secrets new-dockercfg "nexus-${productionProject}" --docker-server=${dockerRegistry} \
             --docker-username="${env.NEXUS_USERNAME}" --docker-password="${env.NEXUS_PASSWORD}" --docker-email="docker@gitook.com"
           ${oc} secrets link default "nexus-${productionProject}" --for=pull
           ${oc} secrets link builder "nexus-${productionProject}" --for=pull
@@ -82,7 +82,7 @@ node('master') {
         ${oc} login ${osHost} -n ${stagingProject} --username=${env.OS_USERNAME} --password=${env.OS_PASSWORD} --insecure-skip-tls-verify
         ${oc} process -f ${stagingTemplate} | ${oc} create -f - -n ${stagingProject} || true
 
-        ${oc} tag --source=docker <%= @docker_registry%>/<%= @app_name %>:${IMAGE_TAG} ${stagingProject}/<%= @app_name %>-is:latest --insecure
+        ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${stagingProject}/<%= @app_name %>-is:latest --insecure
         sleep 5
         ${oc} import-image <%= @app_name %>-is --confirm --insecure | grep -i "successfully"
 
@@ -114,7 +114,7 @@ node('master') {
 
       if (userInput == "ZDD Rolling Deployment") {
         sh """
-          ${oc} tag --source=docker <%= @docker_registry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
+          ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image ${blue}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
           ${oc} set -n ${productionProject} route-backends ab-<%= @app_name %>-rt ${blue}-<%= @app_name %>-svc=100 ${green}-<%= @app_name %>-svc=0
@@ -123,7 +123,7 @@ node('master') {
       } else {
         abDeployment = true
         sh """
-          ${oc} tag --source=docker <%= @docker_registry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
+          ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image ${green}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
           echo "Green liveness check URL: http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"

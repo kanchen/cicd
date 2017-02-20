@@ -9,7 +9,7 @@ properties([
     [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check application readiness', name: 'READINESS_PATH'],
     [$class: 'StringParameterDefinition', defaultValue: 'nexus.gitook.com:8447', description: 'The docker registry URL', name: 'DOCKER_REGISTRY_URL'],
     [$class: 'StringParameterDefinition', defaultValue: 'demouser', description: 'The docker repo', name: 'DOCKER_REGISTRY_REPO']
-//    [$class: 'StringParameterDefinition', defaultValue: '1.0', description: 'The default docker image tag', name: 'IMAGE_TAG'],
+    [$class: 'StringParameterDefinition', defaultValue: 'latest', description: 'The default docker image tag', name: 'IMAGE_TAG'],
   ]]
 ])
 
@@ -35,7 +35,7 @@ node('master') {
       [$class: 'UsernamePasswordMultiBinding', credentialsId: gitCredentialId, usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD']
     ]) {
       def args = "app_name=${APP_NAME} docker_registry_url=${DOCKER_REGISTRY_URL} docker_registry_repo=${DOCKER_REGISTRY_REPO}\
-      app_port=${APP_PORT} git_organization=${env.GIT_USERNAME} memory_limit=${MEMORY_LIMIT} liveness_path=${LIVENESS_PATH} readiness_path=${READINESS_PATH}"
+      app_port=${APP_PORT} git_organization=${env.GIT_USERNAME} memory_limit=${MEMORY_LIMIT} liveness_path=${LIVENESS_PATH} readiness_path=${READINESS_PATH} image_tag=${IMAGE_TAG}"
 
       dir("${env.WORKSPACE}") {
         sh """
@@ -129,7 +129,6 @@ node('master') {
 
   stage ('Invoke CICD Pipelines') {
     sleep 10;
-/*    
     try {
       // load the parameteres
       build job: "${APP_NAME}-Development"
@@ -139,7 +138,6 @@ node('master') {
       echo "${APP_NAME} CI pipeline: ${APP_NAME}-Development created."
     }
 
-*/
     try {
       // load the parameteres
       build job: "${APP_NAME}-Continuous-Delivery(CD)"
