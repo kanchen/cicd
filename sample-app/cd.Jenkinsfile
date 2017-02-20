@@ -82,7 +82,7 @@ node('master') {
         ${oc} login ${osHost} -n ${stagingProject} --username=${env.OS_USERNAME} --password=${env.OS_PASSWORD} --insecure-skip-tls-verify
         ${oc} process -f ${stagingTemplate} | ${oc} create -f - -n ${stagingProject} || true
 
-        ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${stagingProject}/<%= @app_name %>-is:latest --insecure
+        ${oc} tag --source=docker ${dockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${stagingProject}/<%= @app_name %>-is:latest --insecure
         sleep 5
         ${oc} import-image <%= @app_name %>-is --confirm --insecure | grep -i "successfully"
 
@@ -114,7 +114,7 @@ node('master') {
 
       if (userInput == "ZDD Rolling Deployment") {
         sh """
-          ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
+          ${oc} tag --source=docker ${ockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image ${blue}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
           ${oc} set -n ${productionProject} route-backends ab-<%= @app_name %>-rt ${blue}-<%= @app_name %>-svc=100 ${green}-<%= @app_name %>-svc=0
@@ -123,7 +123,7 @@ node('master') {
       } else {
         abDeployment = true
         sh """
-          ${oc} tag --source=docker <%= @dockerRegistry%>/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
+          ${oc} tag --source=docker ${ockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image ${green}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
           echo "Green liveness check URL: http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
