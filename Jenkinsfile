@@ -26,7 +26,7 @@ node('master') {
       doGenerateSubmoduleConfigurations: false,
       extensions: [],
       submoduleCfg: [],
-      userRemoteConfigs: [[credentialsId: gitCredentialId, url: "https://${gitUrl}"]]
+      userRemoteConfigs: [[credentialsId: gitCredentialId, url: "${gitUrl}"]]
     ])
   }
 
