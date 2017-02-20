@@ -129,6 +129,7 @@ node('master') {
 
   stage ('Invoke CICD Pipelines') {
     sleep 10;
+/*    
     try {
       // load the parameteres
       build job: "${APP_NAME}-Development"
@@ -137,6 +138,8 @@ node('master') {
       build job: "${APP_NAME}-Development", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]]
       echo "${APP_NAME} CI pipeline: ${APP_NAME}-Development created."
     }
+
+*/
     try {
       // load the parameteres
       build job: "${APP_NAME}-Continuous-Delivery(CD)"

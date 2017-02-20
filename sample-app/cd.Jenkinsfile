@@ -9,7 +9,7 @@ node('master') {
   def oc = "oc"
   def osHost = "ocpc.gitook.com:8443"
   def osCredentialId = 'OpenshiftCredentialId'
-  def gitUrl = 'https://github.com/aceinfo-jenkins/CicdSelfService.git'
+  def gitUrl = 'https://github.com/aceinfo-jenkins/<%= @app_name %>.git'
   def gitCredentialId = 'jenkinsGithubCredentialId'
   def nexusRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
   def nexusCredentialId = '41aebb46-b195-4957-bae0-78376aa149b0'
