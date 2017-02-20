@@ -54,7 +54,7 @@ public class HelloWorldConfigurationTests {
 	public void shouldReturn200WhenSendingRequestToController() throws Exception {
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = this.testRestTemplate.getForEntity(
-				"http://localhost:" + this.port + "/CicdSelfService", Map.class);
+				"http://localhost:" + this.port + "/<%= @app_name %>", Map.class);
 
 		then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}

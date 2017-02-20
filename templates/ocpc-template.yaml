@@ -1,51 +1,51 @@
 kind: Template
 apiVersion: v1
 labels:
-  template: CicdSelfService-dev-deployment
-  group: CicdSelfService-dev-deployment
-  application: CicdSelfService
-  environment: dev
+  template: <%= @app_name %>-<%= @environment %>-deployment
+  group: <%= @app_name %>-<%= @environment %>-deployment
+  application: <%= @app_name%>
+  environment: <%= @environment %>
 metadata:
-  name: CicdSelfService-dev-deployment
-message: CicdSelfService Stage Deployment
+  name: <%= @app_name %>-<%= @environment %>-deployment
+message: <%= @app_name %> <%= @environment.capitalize %> Deployment
 
 objects:
 #APPLICATION
 - kind: Service
   apiVersion: v1
   metadata:
-    name: "CicdSelfService-svc"
+    name: "<%= @app_name %>-svc"
   spec:
     ports:
-    - name: "CicdSelfService-svc"
-      port: 9000
-      targetPort: 9000
+    - name: "<%= @app_name %>-svc"
+      port: <%= @app_port %>
+      targetPort: <%= @app_port %>
     selector:
-      name: "CicdSelfService-dc"
+      name: "<%= @app_name %>-dc"
     sessionAffinity: None
 
 #Application Route
 - kind: Route
   apiVersion: v1
   metadata:
-    name: CicdSelfService-rt
+    name: <%= @app_name %>-rt
   spec:
     to:
       kind: Service
-      name: "CicdSelfService-svc"
+      name: "<%= @app_name %>-svc"
 
 # Application ImageStream
 - kind: ImageStream
   apiVersion: v1
   metadata:
-    name: "CicdSelfService-is"
+    name: "<%= @app_name %>-is"
   spec:
-#    dockerImageRepository: "/CicdSelfService"
-    dockerImageRepository: ""
+#    dockerImageRepository: "<%= @docker_registry %>/<%= @app_name %>"
+    dockerImageRepository: "<%= @docker_registry %>"
 #    tags:
 #    - from:
 #      kind: dockerImageRepository
-#      name: "/CicdSelfService:0.0"
+#      name: "<%= @docker_registry %>/<%= @app_name %>:0.0"
     importPolicy:
       insecure: true
     name: latest
@@ -53,34 +53,34 @@ objects:
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
-    name: "CicdSelfService-dc"
+    name: "<%= @app_name %>-dc"
   spec:
     replicas: 1
     selector:
-      name: "CicdSelfService-dc"
+      name: "<%= @app_name %>-dc"
     strategy:
       type: Rolling
     template:
       metadata:
         labels:
-          name: "CicdSelfService-dc"
+          name: "<%= @app_name %>-dc"
       spec:
         containers:
-        - name: CicdSelfService
-          image: "CicdSelfService-is"
+        - name: <%= @app_name %>
+          image: "<%= @app_name %>-is"
           ports:
-          - containerPort: 9000
+          - containerPort: <%= @app_port %>
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
-              path: /myservice
-              port: 9000
+              path: <%= @liveness_path %>
+              port: <%= @app_port %>
             initialDelaySeconds: 30
             timeoutSeconds: 3
           readinessProbe:
             httpGet:
-              path: /myservice
-              port: 9000
+              path: <%= @readiness_path %>
+              port: <%= @app_port %>
             initialDelaySeconds: 3
             timeoutSeconds: 1
             periodSeconds: 2
@@ -88,14 +88,14 @@ objects:
             failureThreashold: 5
           resources:
             limits:
-              memory: 512Mi
+              memory: <%= @memory_limit %>
     triggers:
     - type: ConfigChange
     - type: ImageChange
       imageChangeParams:
         automatic: true
         containerNames:
-        - "CicdSelfService"
+        - "<%= @app_name %>"
         from:
           kind: ImageStream
-          name: "CicdSelfService-is"
+          name: "<%= @app_name %>-is"

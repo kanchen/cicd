@@ -1,0 +1,90 @@
+
+properties([
+  [$class: 'ParametersDefinitionProperty', parameterDefinitions: [
+    [$class: 'StringParameterDefinition', defaultValue: 'nexus.gitook.com:8447/demouser', description: 'The docker registry', name: 'DOCKER_REGISTRY'],
+    [$class: 'StringParameterDefinition', defaultValue: 'hello', description: 'The application docker image name', name: 'APP_NAME'],
+    [$class: 'StringParameterDefinition', defaultValue: '1.0', description: 'The default docker image tag', name: 'IMAGE_TAG'],    
+    [$class: 'StringParameterDefinition', defaultValue: '9000', description: 'The TCP port application running', name: 'APP_PORT'],
+    [$class: 'StringParameterDefinition', defaultValue: '512Mi', description: 'The memory limit allocated to the running application', name: 'MEMORY_LIMIT'],
+    [$class: 'StringParameterDefinition', defaultValue: '/hello-world', description: 'The path to check for application liveness', name: 'LIVENESS_PATH'],
+    [$class: 'StringParameterDefinition', defaultValue: '/hello-world', description: 'The path to check application readiness', name: 'READINESS_PATH']
+  ]]
+])
+
+node('master') {
+  def gitUrl = 'github.com/AceInfoSolutions/DHS-TICSII-TechChallenge.git'
+  def gitCredentialId = 'jenkinsGithubCredentialId'
+
+  stage ('Git Pull') {
+    step([$class: 'WsCleanup', notFailBuild: true])
+    checkout([$class: 'GitSCM',
+      branches: [[name: '*/master']],
+      doGenerateSubmoduleConfigurations: false,
+      extensions: [],
+      submoduleCfg: [],
+      userRemoteConfigs: [[credentialsId: gitCredentialId, url: "https://${gitUrl}"]]
+    ])
+  }
+
+  stage ('Generate Pipeline Templates') {
+    def args = "app_name=${APP_NAME} docker_registry=${DOCKER_REGISTRY} image_tag=${IMAGE_TAG} app_port=${APP_PORT}\
+      memory_limit=${MEMORY_LIMIT} liveness_path=${LIVENESS_PATH} readiness_path=${READINESS_PATH}"
+
+    dir("${env.WORKSPACE}") {
+      sh """
+        mkdir -p CD/pipelines/${APP_NAME}
+        ruby ${env.WORKSPACE}/GetStarted/copy.rb CD/templates CD/pipelines/${APP_NAME} ${args}
+      """
+    }
+  }
+
+  stage ('Push to Git Repositery') {
+    withCredentials([
+      [$class: 'UsernamePasswordMultiBinding', credentialsId: gitCredentialId, usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD']
+    ]) {
+      dir("${env.WORKSPACE}/CD") {
+        sh """
+          git checkout master
+          git add pipelines/
+          git diff --quiet --exit-code --cached || git commit -am "Add generated ${APP_NAME} CD pipeline"
+          git remote rm origin
+          git remote add origin https://${env.GIT_USERNAME}:${env.GIT_PASSWORD}@${gitUrl}
+          git push origin master
+        """
+      }
+    }
+  }
+  
+  stage ('Create Jenkins CD Pipeline') {
+    jobDsl scriptText: """
+      pipelineJob("${APP_NAME}-Continuous-Delivery(CD)") {
+        definition {
+          cpsScm {
+            scriptPath("CD/pipelines/${APP_NAME}/Jenkinsfile")
+            scm {
+              git {
+                remote {
+                  url("https://${gitUrl}")
+                  credentials("${gitCredentialId}")
+                  branch("master")
+                }
+              }
+            }
+          }
+        }
+      }
+    """
+  }
+
+  stage ('Build Application Pipeline') {
+    sleep 4;
+    try {
+      // load the parameteres
+      build job: "${APP_NAME}-Continuous-Delivery(CD)"
+    } catch (Exception e) {
+      sleep 2;
+      //starts the build
+      build job: "${APP_NAME}-Continuous-Delivery(CD)"
+    }
+  }
+}

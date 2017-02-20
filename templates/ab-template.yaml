@@ -1,0 +1,233 @@
+kind: Template
+apiVersion: v1
+labels:
+  template: <%= @app_name%>-<%= @environment %>-deployment
+  group: <%= @app_name%>-<%= @environment %>-deployment
+  application: <%= @app_name%>
+  environment: <%= @environment %>
+metadata:
+  annotations:
+    description: <%= @app_name%> <%= @environment.capitalize %> A/B Deployments
+    tags: <%= @app_name%>-<%= @environment %>-deployment
+  name: <%= @app_name%>-<%= @environment %>-deployment
+message: <%= @app_name%> <%= @environment.capitalize %> Deployment Template
+
+objects:
+#Application Route
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: "ab-<%= @app_name %>-rt"
+  spec:
+    to:
+      kind: Service
+      name: "a-<%= @app_name %>-svc"
+      weight: "100"
+    alternateBackends:
+    - kind: Service
+      name: "b-<%= @app_name %>-svt"
+      weight: "0"
+
+#Application A Deployment
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "a-<%= @app_name %>-dc"
+  spec:
+    replicas: 1
+    selector:
+      name: "a-<%= @app_name %>-dc"
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: "a-<%= @app_name %>-dc"
+      spec:
+        containers:
+        - name: "a-<%= @app_name %>"
+          image: "a-<%= @app_name %>-is"
+          ports:
+          - containerPort: <%= @app_port %>
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: <%= @liveness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: <%= @readiness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 2
+            seccessThreashold: 1
+            failureThreashold: 5
+          resources:
+            limits:
+              memory: <%= @memory_limit %>
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - "a-<%= @app_name %>"
+        from:
+          kind: ImageStream
+          name: "a-<%= @app_name %>-is"
+
+- kind: HorizontalPodAutoscaler
+  apiVersion: extensions/v1beta1
+  metadata:
+    name: a-<%= @app_name %>-hpa
+  spec:
+    scaleRef:
+      kind: DeploymentConfig
+      name: a-<%= @app_name %>-dc
+      apiVersion: v1
+      subresource: scale
+    minReplicas: 1
+    maxReplicas: 10
+    cpuUtilization:
+      targetPercentage: 80
+
+#Application Service    
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "a-<%= @app_name %>-svc"
+  spec:
+    ports:
+    - name: web
+      port: <%= @app_port %>
+      targetPort: <%= @app_port %>
+    selector:
+      name: "a-<%= @app_name %>-dc"
+#Route
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "a-<%= @app_name %>-rt"
+  spec:
+    to:
+      kind: Service
+      name: "a-<%= @app_name %>-svc"
+
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: "a-<%= @app_name %>-is"
+  spec:
+    dockerImageRepository: "<%= @docker_registry %>"
+#    tags:
+#    - from:
+#      kind: dockerImageRepository
+#      name: "<%= @docker_registry %>/<%= @app_name %>:0.0"
+    importPolicy:
+      insecure: true
+    name: latest
+
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: "b-<%= @app_name %>-is"
+  spec:
+    dockerImageRepository: "<%= @docker_registry %>"
+#    tags:
+#    - from:
+#      kind: dockerImageRepository
+#      name: "<%= @docker_registry %>/<%= @app_name %>:0.0"
+    importPolicy:
+      insecure: true
+    name: latest
+
+#Application B Deployment
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "b-<%= @app_name %>-dc"
+  spec:
+    replicas: 1
+    selector:
+      name: "b-<%= @app_name %>-dc"
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: "b-<%= @app_name %>-dc"
+      spec:
+        containers:
+        - name: "b-<%= @app_name %>"
+          image: "b-<%= @app_name %>-is"
+          ports:
+          - containerPort: <%= @app_port %>
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: <%= @liveness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: <%= @readiness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 2
+            seccessThreashold: 1
+            failureThreashold: 5
+          resources:
+            limits:
+              memory: <%= @memory_limit %>
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - "b-<%= @app_name %>"
+        from:
+          kind: ImageStream
+          name: "b-<%= @app_name %>-is"
+
+#Application Service    
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "b-<%= @app_name %>-svc"
+  spec:
+    ports:
+    - name: web
+      port: <%= @app_port %>
+      targetPort: <%= @app_port %>
+    selector:
+      name: "b-<%= @app_name %>-dc"
+#Route
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "b-<%= @app_name %>-rt"
+  spec:
+    to:
+      kind: Service
+      name: "b-<%= @app_name %>-svc"
+
+- kind: HorizontalPodAutoscaler
+  apiVersion: extensions/v1beta1
+  metadata:
+    name: b-<%= @app_name %>-hpa
+  spec:
+    scaleRef:
+      kind: DeploymentConfig
+      name: b-<%= @app_name %>-dc
+      apiVersion: v1
+      subresource: scale
+    minReplicas: 1
+    maxReplicas: 10
+    cpuUtilization:
+      targetPercentage: 80

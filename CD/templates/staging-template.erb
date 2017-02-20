@@ -1,0 +1,101 @@
+kind: Template
+apiVersion: v1
+labels:
+  template: <%= @app_name %>-staging-deployment
+  group: <%= @app_name %>-staging-deployment
+  application: <%= @app_name%>
+  environment: staging
+metadata:
+  name: <%= @app_name %>-staging-deployment
+message: <%= @app_name %> Stage Deployment
+
+objects:
+#APPLICATION
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "<%= @app_name %>-svc"
+  spec:
+    ports:
+    - name: "<%= @app_name %>-svc"
+      port: <%= @app_port %>
+      targetPort: <%= @app_port %>
+    selector:
+      name: "<%= @app_name %>-dc"
+    sessionAffinity: None
+
+#Application Route
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: <%= @app_name %>-rt
+  spec:
+    to:
+      kind: Service
+      name: "<%= @app_name %>-svc"
+
+# Application ImageStream
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: "<%= @app_name %>-is"
+  spec:
+#    dockerImageRepository: "<%= @docker_registry %>/<%= @app_name %>"
+    dockerImageRepository: "<%= @docker_registry %>"
+#    tags:
+#    - from:
+#      kind: dockerImageRepository
+#      name: "<%= @docker_registry %>/<%= @app_name %>:0.0"
+    importPolicy:
+      insecure: true
+    name: latest
+
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "<%= @app_name %>-dc"
+  spec:
+    replicas: 1
+    selector:
+      name: "<%= @app_name %>-dc"
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: "<%= @app_name %>-dc"
+      spec:
+        containers:
+        - name: <%= @app_name %>
+          image: "<%= @app_name %>-is"
+          ports:
+          - containerPort: <%= @app_port %>
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: <%= @liveness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: <%= @readiness_path %>
+              port: <%= @app_port %>
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 2
+            seccessThreashold: 1
+            failureThreashold: 5
+          resources:
+            limits:
+              memory: <%= @memory_limit %>
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - "<%= @app_name %>"
+        from:
+          kind: ImageStream
+          name: "<%= @app_name %>-is"

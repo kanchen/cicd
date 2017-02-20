@@ -1,0 +1,72 @@
+How to access Nexus docker registry
+===========================
+
+1. ssh to the host as ec2-user and sudo to root
+2. mkdir -p /etc/docker/certs.d/nexus.gitook.com:8447
+3. cd /etc/docker/certs.d/nexus.gitook.com\:8447/
+4. vi ca.crt
+
+    -----BEGIN CERTIFICATE-----
+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
+-----END CERTIFICATE-----
+
+Docker Login
+===========
+docker login nexus.gitook.com:8447
+Username: demouser
+Password: AceInfozen123
+
+Login Succeeded
+
+Docker Pull
+=========
+docker pull mysql
+
+Docker Tag
+==========
+docker images
+
+REPOSITORY                      TAG                 IMAGE ID            CREATED             SIZE
+docker.io/mysql                  latest              7666f75adb6b        2 weeks ago         405.6 MB
+
+docker tag 7666f75adb6b nexus.gitook.com:8447/ace-mysql:latest
+
+Docker push
+=========
+docker push nexus.gitook.com:8447/ace-mysql:latest
+
+Docker Search
+===========
+docker search nexus.gitook.com:8447/*mysql
+INDEX        NAME                                     DESCRIPTION   STARS     OFFICIAL   AUTOMATED
+gitook.com    nexus.gitook.com:8447/ace-mysql:latest                  0

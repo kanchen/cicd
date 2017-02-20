@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-@RequestMapping("/CicdSelfService")
+@RequestMapping("/<%= @app_name %>")
 public class HelloWorldController {
 
     private static final String template = "Hello, %s!";

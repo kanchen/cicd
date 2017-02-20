@@ -17,7 +17,7 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 
 jar {
-    baseName = 'CicdSelfService'
+    baseName = '<%= @app_name %>'
     version =  '0.1.0'
 }
 
@@ -35,7 +35,7 @@ dependencies {
     testCompile("junit:junit")
 }
 
-group = 'demouser'
+group = '<%= @docker_registry_repo %>'
 
 apply plugin: 'docker'
 
@@ -54,8 +54,8 @@ task buildDocker(type: Docker, dependsOn: build) {
 apply plugin: "org.sonarqube"
 sonarqube {
   properties {
-    property "sonar.projectName", "CicdSelfService"
-    property "sonar.projectKey", "org.sonarqube:CicdSelfService"
+    property "sonar.projectName", "<%= @app_name %>"
+    property "sonar.projectKey", "org.sonarqube:<%= @app_name %>"
     property "sonar.projectVersion",jar.baseName
 
   }
