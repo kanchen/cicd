@@ -59,6 +59,8 @@ node('master') {
           ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=testing
           ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=staging
           ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ab-template.yaml ${APP_NAME}/templates/production-template.yaml ${args} environment=production
+          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}
+          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/cd.Jenkinsfile ${APP_NAME}/cd.Jenkinsfile ${args}
 
           cd ${APP_NAME}
           git add --all ./*
@@ -73,12 +75,12 @@ node('master') {
     }
   }
 
-  stage ('PrepareCICD Pipelines') {
+  stage ('Create CICD Pipelines') {
     jobDsl scriptText: """
       pipelineJob("${APP_NAME}-Development") {
         definition {
           cpsScm {
-            scriptPath("Jenkinsfile")
+            scriptPath("ci.Jenkinsfile")
             scm {
               git {
                 remote {
@@ -107,39 +109,26 @@ node('master') {
     """
 
     jobDsl scriptText: """
-      pipelineJob("${APP_NAME}-Development") {
+      pipelineJob("${APP_NAME}-Continuous-Delivery(CD)") {
         definition {
           cpsScm {
-            scriptPath("Jenkinsfile")
+            scriptPath("cd.Jenkinsfile")
             scm {
               git {
                 remote {
                   url("https://github.com/aceinfo-jenkins/${APP_NAME}.git")
                   credentials("${gitCredentialId}")
-                  branch("CI-${APP_NAME}")
+                  branch("master")
                 }
               }
             }
           }
-        }
-        scm {
-          git {
-            remote {
-                name('origin')
-                url("https://github.com/aceinfo-jenkins/${APP_NAME}.git")
-                credentials("${gitCredentialId}")
-            }
-            branch("CI-${APP_NAME}")
-          }
-        }
-        triggers {
-          cron('* * * * *')
         }
       }
     """
   }
 
-  stage ('Create CICD Pipeline') {
+  stage ('Invoke CICD Pipelines') {
     sleep 10;
     try {
       // load the parameteres
@@ -147,7 +136,14 @@ node('master') {
     } catch (Exception e) {
       sleep 5;
       build job: "${APP_NAME}-Development", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]]
-      echo "Developer's application pipeline: ${APP_NAME}-Development created."
+      echo "${APP_NAME} CI pipeline: ${APP_NAME}-Development created."
+    }
+    try {
+      // load the parameteres
+      build job: "${APP_NAME}-Continuous-Delivery(CD)"
+    } catch (Exception e) {
+      sleep 5;
+      echo "${APP_NAME} CD pipeline: ${APP_NAME}-Continuous-Delivery(CD) created."
     }
   }
 

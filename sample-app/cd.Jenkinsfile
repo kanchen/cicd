@@ -9,14 +9,14 @@ node('master') {
   def oc = "oc"
   def osHost = "ocpc.gitook.com:8443"
   def osCredentialId = 'OpenshiftCredentialId'
-  def gitUrl = 'https://github.com/AceInfoSolutions/DHS-TICSII-TechChallenge.git'
+  def gitUrl = 'https://github.com/aceinfo-jenkins/CicdSelfService.git'
   def gitCredentialId = 'jenkinsGithubCredentialId'
-  def nexusRegistry = "<%= @docker_registry %>"
+  def nexusRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
   def nexusCredentialId = '41aebb46-b195-4957-bae0-78376aa149b0'
   def stagingProject = "staging"
   def productionProject = "production"
-  def stagingTemplate = "CD/pipelines/<%= @app_name %>/staging-template.yaml"
-  def productionTemplate = "CD/pipelines/<%= @app_name %>/prod-template.yaml"
+  def stagingTemplate = "templates/staging-template.yaml"
+  def productionTemplate = "templates/production-template.yaml"
   def green = "a"
   def blue = "b"
   def userInput

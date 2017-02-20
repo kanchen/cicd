@@ -17,7 +17,8 @@ node('master') {
     def gitCredentialId = 'jenkinsGithubCredentialId'
     def nexusRegistry = "<%= @docker_registry_url %>/<%= @docker_registry_repo %>"
     def nexusCredentialId = '41aebb46-b195-4957-bae0-78376aa149b0'
-    def devTemplate = "osTemplate.yaml"
+    def testingTemplateName = "/templates/testing-template.yaml"
+    def testingProject = "testing"
 
     stage ('Preparation') {
       checkout([$class: 'GitSCM',
@@ -110,25 +111,25 @@ node('master') {
 
         try {
           sh """
-            ${oc} project ${env.BUILD_USER_ID}
+            ${oc} project ${testingProject}
           """         
         } catch (Exception e) {
           sh """
-            ${oc} new-project ${env.BUILD_USER_ID} --display-name="${env.BUILD_USER_ID}'s Development Environment"
-            ${oc} secrets new-dockercfg "nexus-${env.BUILD_USER_ID}" --docker-server=${nexusRegistry} \
+            ${oc} new-project ${testingProject} --display-name="Testing Environment"
+            ${oc} secrets new-dockercfg "nexus-${testingProject}" --docker-server=${nexusRegistry} \
               --docker-username="${env.NEXUS_USERNAME}" --docker-password="${env.NEXUS_PASSWORD}" --docker-email="docker@gitook.com"
-            ${oc} secrets link default "nexus-${env.BUILD_USER_ID}" --for=pull
-            ${oc} secrets link builder "nexus-${env.BUILD_USER_ID}" --for=pull
-            ${oc} secrets link deployer "nexus-${env.BUILD_USER_ID}" --for=pull
+            ${oc} secrets link default "nexus-${testingProject}" --for=pull
+            ${oc} secrets link builder "nexus-${testingProject}" --for=pull
+            ${oc} secrets link deployer "nexus-${testingProject}" --for=pull
           """                
         }
         sh """
-          ${oc} process -f ${devTemplate} | ${oc} create -f - -n ${env.BUILD_USER_ID} || true
-          ${oc} tag --source=docker ${nexusRegistry}/<%= @app_name %>:${IMAGE_TAG} ${env.BUILD_USER_ID}/<%= @app_name %>-is:latest --insecure
+          ${oc} process -f ${testingTemplateName} | ${oc} create -f - -n ${testingProject} || true
+          ${oc} tag --source=docker ${nexusRegistry}/<%= @app_name %>:${IMAGE_TAG} ${testingProject}/<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image <%= @app_name %>-is --confirm --insecure | grep -i "successfully"
 
-          echo "Liveness check URL: http://`${oc} get route <%= @app_name %>-rt -n ${env.BUILD_USER_ID} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+          echo "Liveness check URL: http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
         """
       }
     }
@@ -141,7 +142,7 @@ node('master') {
           while [ \$REVAL ]
           do
             sleep 10
-            curl -I "http://`${oc} get route hello10-rt -n ${env.BUILD_USER_ID} -o jsonpath='{ .spec.host }'`/hello-world" | grep "HTTP/1.1 200"
+            curl -I "http://`${oc} get route hello10-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`/hello-world" | grep "HTTP/1.1 200"
             REVAL=\$?
           done
         """
@@ -163,7 +164,7 @@ node('master') {
       ]) {
         sh """
           ${oc} login ${osHost} --username=${env.OS_USERNAME} --password=${env.OS_PASSWORD} --insecure-skip-tls-verify
-          ${oc} delete project ${env.BUILD_USER_ID}
+          ${oc} delete project ${testingProject}
           ${oc} logout
         """
       }
