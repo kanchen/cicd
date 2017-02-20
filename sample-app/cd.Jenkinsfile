@@ -123,7 +123,7 @@ node('master') {
       } else {
         abDeployment = true
         sh """
-          ${oc} tag --source=docker ${ockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
+          ${oc} tag --source=docker ${dockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
           sleep 5
           ${oc} import-image ${green}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
           echo "Green liveness check URL: http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
