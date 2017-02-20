@@ -41,7 +41,7 @@ node('master') {
         sh """
           curl https://api.github.com/repos/aceinfo-jenkins/${APP_NAME} | grep  "Not Found" || (echo "Github repo: ${APP_NAME} exists" && exit 1)
           mkdir -p generated
-          ruby ${env.WORKSPACE}copy.rb repo-template.erb generated/${APP_NAME}-repo.json ${args}
+          ruby ${env.WORKSPACE}/copy.rb repo-template.erb generated/${APP_NAME}-repo.json ${args}
           curl -u "${env.GIT_USERNAME}:${env.GIT_PASSWORD}" https://api.github.com/user/repos -d @"generated/${APP_NAME}-repo.json"
         """
       }
@@ -52,15 +52,15 @@ node('master') {
           cd ${APP_NAME}-repo
           git clone https://${env.GIT_USERNAME}:${env.GIT_PASSWORD}@github.com/${env.GIT_USERNAME}/${APP_NAME}.git
 
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/sample-app ${APP_NAME} ${args}
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/sample-app ${APP_NAME} ${args}
           chmod 755 ${APP_NAME}/gradle ${APP_NAME}/gradlew
 
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/testing-template.yaml ${args} environment=dev
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=testing
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=staging
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/templates/ab-template.yaml ${APP_NAME}/templates/production-template.yaml ${args} environment=production
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}
-          ruby ${env.WORKSPACE}copy.rb ${env.WORKSPACE}/cd.Jenkinsfile ${APP_NAME}/cd.Jenkinsfile ${args}
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/testing-template.yaml ${args} environment=dev
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=testing
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ocpc-template.yaml ${APP_NAME}/templates/staging-template.yaml ${args} environment=staging
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/templates/ab-template.yaml ${APP_NAME}/templates/production-template.yaml ${args} environment=production
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/ci.Jenkinsfile ${APP_NAME}/ci.Jenkinsfile ${args}
+          ruby ${env.WORKSPACE}/copy.rb ${env.WORKSPACE}/cd.Jenkinsfile ${APP_NAME}/cd.Jenkinsfile ${args}
 
           cd ${APP_NAME}
           git add --all ./*
