@@ -16,7 +16,7 @@ properties([
 node('master') {
   currentBuild.displayName = "${BUILD_NUMBER}-${APP_NAME}"
   currentBuild.description = "Aceinfo Automation: Self CICD Pipeline"
-  def gitUrl = 'github.com/AceInfoSolutions/DHS-TICSII-TechChallenge.git'
+  def gitUrl = 'https://github.com/aceinfo-jenkins/CicdSelfService.git'
   def gitCredentialId = 'jenkinsGithubCredentialId'
 
   stage ('Pull template from repo') {
