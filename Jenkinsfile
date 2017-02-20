@@ -8,7 +8,7 @@ properties([
     [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check for application liveness', name: 'LIVENESS_PATH'],
     [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check application readiness', name: 'READINESS_PATH'],
     [$class: 'StringParameterDefinition', defaultValue: 'nexus.gitook.com:8447', description: 'The docker registry URL', name: 'DOCKER_REGISTRY_URL'],
-    [$class: 'StringParameterDefinition', defaultValue: 'demouser', description: 'The docker repo', name: 'DOCKER_REGISTRY_REPO']
+    [$class: 'StringParameterDefinition', defaultValue: 'demouser', description: 'The docker repo', name: 'DOCKER_REGISTRY_REPO'],
     [$class: 'StringParameterDefinition', defaultValue: 'latest', description: 'The default docker image tag', name: 'IMAGE_TAG'],
   ]]
 ])
