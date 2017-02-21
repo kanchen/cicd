@@ -85,7 +85,7 @@ node('master') {
                 remote {
                   url("https://github.com/aceinfo-jenkins/${APP_NAME}.git")
                   credentials("${gitCredentialId}")
-                  branch("CI-${APP_NAME}")
+                  branch("master")
                 }
               }
             }
