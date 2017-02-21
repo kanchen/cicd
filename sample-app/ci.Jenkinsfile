@@ -142,25 +142,22 @@ node('master') {
           for (;retstat != 0;) {
             retstat = sh(
               script: """
-                curl -I "http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} \
-                  -o jsonpath='{ .spec.host }'`<%= @liveness_path %>" | grep "HTTP/1.1 200"
-              """,
-              returnStatus: true)
+                curl -I "http://`${oc} get route myservice2-rt -n ${testingProject} \
+                  -o jsonpath='{ .spec.host }'`/myservice2" | grep "HTTP/1.1 200"
+              """, returnStatus: true)
 
-            if (restat != 0) {
+            if (retstat != 0) {
               sleep 10
-            }
-            else {
-              break
             }
           }
         }
 
         if (retstat != 0) {
-          echo "Health check to http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %> failed."
+          echo "Health check to http://`${oc} get route myservice2-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`/myservice2 failed."
           exit retstat
         }
       }
+    }
 
       stage('Performance Testing - jMeter') {
         dir("${env.WORKSPACE}") {
