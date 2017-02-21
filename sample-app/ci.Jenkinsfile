@@ -137,19 +137,29 @@ node('master') {
       }
 
       stage('API/Intgration Testing') {
-  /*    
+        def retstat = 1
         timeout (time: 5, unit: 'MINUTES') {
-          sh """
-            REVAL=1
-            while [ \$REVAL ]
-            do
+          for (;retstat != 0;) {
+            retstat = sh(
+              script: """
+                curl -I "http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} \
+                  -o jsonpath='{ .spec.host }'`<%= @liveness_path %>" | grep "HTTP/1.1 200"
+              """,
+              returnStatus: true)
+
+            if (restat != 0) {
               sleep 10
-              curl -I "http://`${oc} get route hello10-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`/hello-world" | grep "HTTP/1.1 200"
-              REVAL=\$?
-            done
-          """
+            }
+            else {
+              break
+            }
+          }
         }
-  */
+
+        if (retstat != 0) {
+          echo "Health check to http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %> failed."
+          exit retstat
+        }
       }
 
       stage('Performance Testing - jMeter') {
@@ -158,6 +168,7 @@ node('master') {
         }
       }
 
+/*
       stage ('Destroy Testing Environment') {
         //input message: "Delete Openshift Environment(Cleanup)?", ok: "Delete"
 
@@ -171,6 +182,7 @@ node('master') {
           """
         }
       }
+*/
 
       stage('Merge CI Branch to Master') {
          withCredentials([
