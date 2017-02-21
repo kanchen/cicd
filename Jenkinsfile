@@ -76,7 +76,7 @@ node('master') {
 
   stage ('Create CICD Pipelines') {
     jobDsl scriptText: """
-      pipelineJob("${APP_NAME}-Continuous Integration (CI)") {
+      pipelineJob("${APP_NAME}-Continuous-Integration(CI)") {
         definition {
           cpsScm {
             scriptPath("ci.Jenkinsfile")
@@ -131,11 +131,11 @@ node('master') {
     sleep 10;
     try {
       // load the parameteres
-      build job: "${APP_NAME}-Development"
+      build job: "${APP_NAME}-Continuous-Integration(CI)"
     } catch (Exception e) {
       sleep 5;
-      build job: "${APP_NAME}-Development", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]]
-      echo "${APP_NAME} CI pipeline: ${APP_NAME}-Development created."
+      build job: "${APP_NAME}-Continuous-Integration(CI)", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]]
+      echo "${APP_NAME} CI pipeline: ${APP_NAME}-Continuous-Integration(CI) created."
     }
 
     try {
@@ -153,11 +153,11 @@ node('master') {
     sleep 10;
     try {
       // load the parameteres
-      build job: "${APP_NAME}-Development"
+      build job: "${APP_NAME}-Continuous-Integration(CI)"
     } catch (Exception e) {
       sleep 5;
       //starts the build
-      build job: "${APP_NAME}-Development"
+      build job: "${APP_NAME}-Continuous-Integration(CI)"
     }
   }
 */
