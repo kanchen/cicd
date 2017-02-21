@@ -5,11 +5,13 @@ properties([
     [$class: 'StringParameterDefinition', defaultValue: 'myservice', description: 'The application and docker image name', name: 'APP_NAME'],
     [$class: 'StringParameterDefinition', defaultValue: '9000', description: 'The TCP port application running', name: 'APP_PORT'],
     [$class: 'StringParameterDefinition', defaultValue: '512Mi', description: 'The memory limit allocated to the running application', name: 'MEMORY_LIMIT'],
-    [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check for application liveness', name: 'LIVENESS_PATH'],
-    [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check application readiness', name: 'READINESS_PATH'],
+    [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The application health check URL', name: 'HEALTH_CHECK_URL'],
     [$class: 'StringParameterDefinition', defaultValue: 'latest', description: 'The default docker image tag', name: 'IMAGE_TAG'],
   ]]
 ])
+
+//    [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check for application liveness', name: 'f'],
+//    [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check application readiness', name: 'READINESS_PATH'],
 
 node('master') {
   currentBuild.displayName = "${BUILD_NUMBER}-${APP_NAME}"
@@ -35,7 +37,7 @@ node('master') {
       [$class: 'UsernamePasswordMultiBinding', credentialsId: gitCredentialId, usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD']
     ]) {
       def args = "app_name=${APP_NAME} docker_registry_url=${dockerUrl} docker_registry_repo=${dockerRepo} \
-      app_port=${APP_PORT} git_organization=${env.GIT_USERNAME} memory_limit=${MEMORY_LIMIT} liveness_path=${LIVENESS_PATH} readiness_path=${READINESS_PATH} image_tag=${IMAGE_TAG}"
+      app_port=${APP_PORT} git_organization=${env.GIT_USERNAME} memory_limit=${MEMORY_LIMIT} liveness_path=${HEALTH_CHECK_URL} readiness_path=${HEALTH_CHECK_URL} image_tag=${IMAGE_TAG}"
 
       dir("${env.WORKSPACE}") {
         sh """
@@ -133,5 +135,5 @@ node('master') {
       echo "${APP_NAME} CD pipeline: ${APP_NAME}-Continuous-Delivery(CD) created."
     }
   }
-  
+
 }
