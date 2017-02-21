@@ -91,19 +91,6 @@ node('master') {
             }
           }
         }
-        scm {
-          git {
-            remote {
-                name('origin')
-                url("https://github.com/aceinfo-jenkins/${APP_NAME}.git")
-                credentials("${gitCredentialId}")
-            }
-            branch("CI-${APP_NAME}")
-          }
-        }
-        triggers {
-          cron('* * * * *')
-        }
       }
     """
 
