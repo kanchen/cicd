@@ -157,15 +157,16 @@ node('master') {
       }
     }
 
-    stage('Staging Deployment Health Check') {
+    stage('Production Deployment Health Check') {
       def retstat = 1
       def healthCheckUrl = "http://`oc get route ab-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
       if (canaryDeployment) {
          healthCheckUrl = "http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
       }
+      echo "Health chech URL: ${healthCheckUrl}"
       timeout (time: 5, unit: 'MINUTES') {
         for (;retstat != 0;) {
-          retstat = sh(script: 'curl -I ${healthCheckUrl} | grep "HTTP/1.1 200"', returnStatus: true)
+          retstat = sh(script: "curl -I ${healthCheckUrl} | grep \"HTTP/1.1 200\"", returnStatus: true)
 
           if (retstat != 0) {
             sleep 10
