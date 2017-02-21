@@ -158,7 +158,6 @@ node('master') {
           sh exit ${retstat}
         }
       }
-    }
 
       stage('Performance Testing - jMeter') {
         dir("${env.WORKSPACE}") {
