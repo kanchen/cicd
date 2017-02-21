@@ -68,6 +68,13 @@ objects:
         containers:
         - name: <%= @app_name %>
           image: "<%= @app_name %>-is"
+          env:
+          - name: PRODUCER1
+            value: hostservice-producer-rt-<% @environment %>.apps.gitook.com
+          - name: PRODUCER2
+            value: hostservice2-producer-rt-<% @environment %>.apps.gitook.com
+          - name: DATABASE_NAME
+            value: <% @environment %>-database
           ports:
           - containerPort: <%= @app_port %>
           imagePullPolicy: Always
