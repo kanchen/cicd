@@ -144,7 +144,8 @@ node('master') {
               script: """
                 curl -I "http://`${oc} get route myservice2-rt -n ${testingProject} \
                   -o jsonpath='{ .spec.host }'`/myservice2" | grep "HTTP/1.1 200"
-              """, returnStatus: true)
+              """,
+              returnStatus: true)
 
             if (retstat != 0) {
               sleep 10
@@ -154,7 +155,7 @@ node('master') {
 
         if (retstat != 0) {
           echo "Health check to http://`${oc} get route myservice2-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`/myservice2 failed."
-          exit retstat
+          sh exit ${retstat}
         }
       }
     }
