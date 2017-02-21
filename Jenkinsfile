@@ -7,8 +7,6 @@ properties([
     [$class: 'StringParameterDefinition', defaultValue: '512Mi', description: 'The memory limit allocated to the running application', name: 'MEMORY_LIMIT'],
     [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check for application liveness', name: 'LIVENESS_PATH'],
     [$class: 'StringParameterDefinition', defaultValue: '/myservice', description: 'The path to check application readiness', name: 'READINESS_PATH'],
-    [$class: 'StringParameterDefinition', defaultValue: 'nexus.gitook.com:8447', description: 'The docker registry URL', name: 'DOCKER_REGISTRY_URL'],
-    [$class: 'StringParameterDefinition', defaultValue: 'demouser', description: 'The docker repo', name: 'DOCKER_REGISTRY_REPO'],
     [$class: 'StringParameterDefinition', defaultValue: 'latest', description: 'The default docker image tag', name: 'IMAGE_TAG'],
   ]]
 ])
@@ -18,6 +16,8 @@ node('master') {
   currentBuild.description = "Aceinfo Automation: Self CICD Pipeline"
   def gitUrl = 'https://github.com/aceinfo-jenkins/CicdSelfService.git'
   def gitCredentialId = 'jenkinsGithubCredentialId'
+  def dockerUrl = "nexus.gitook.com:8447"
+  def dockerRepo = "demouser"
 
   stage ('Pull template from repo') {
     step([$class: 'WsCleanup', notFailBuild: true])
@@ -34,7 +34,7 @@ node('master') {
     withCredentials([
       [$class: 'UsernamePasswordMultiBinding', credentialsId: gitCredentialId, usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD']
     ]) {
-      def args = "app_name=${APP_NAME} docker_registry_url=${DOCKER_REGISTRY_URL} docker_registry_repo=${DOCKER_REGISTRY_REPO}\
+      def args = "app_name=${APP_NAME} docker_registry_url=${dockerUrl} docker_registry_repo=${dockerRepo} \
       app_port=${APP_PORT} git_organization=${env.GIT_USERNAME} memory_limit=${MEMORY_LIMIT} liveness_path=${LIVENESS_PATH} readiness_path=${READINESS_PATH} image_tag=${IMAGE_TAG}"
 
       dir("${env.WORKSPACE}") {
