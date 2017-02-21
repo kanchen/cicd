@@ -142,7 +142,7 @@ node('master') {
           for (;retstat != 0;) {
             retstat = sh(
               script: """
-                curl -I "http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"" | grep "HTTP/1.1 200"
+                curl -I "http://`${oc} get route <%= @app_name %>-rt -n ${testingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>" | grep "HTTP/1.1 200"
               """,
               returnStatus: true)
 
