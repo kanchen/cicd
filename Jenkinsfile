@@ -76,7 +76,7 @@ node('master') {
 
   stage ('Create CICD Pipelines') {
     jobDsl scriptText: """
-      pipelineJob("${APP_NAME}-Development") {
+      pipelineJob("${APP_NAME}-Continuous Integration (CI)") {
         definition {
           cpsScm {
             scriptPath("ci.Jenkinsfile")
