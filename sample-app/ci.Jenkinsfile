@@ -187,6 +187,10 @@ node('master') {
 
     }
 
+    stage ('Trigger CD Pipeline') {
+      build job: "<%= @app_name %>-Continuous-Delivery(CD)", parameters: [[$class: 'StringParameterValue', name: 'IMAGE_TAG', value: "${IMAGE_TAG}"]], wait: false
+    }
+
     notifySuccessful()
 
   } catch (e) {

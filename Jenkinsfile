@@ -121,7 +121,7 @@ node('master') {
       build job: "${APP_NAME}-Continuous-Integration(CI)"
     } catch (Exception e) {
       sleep 5;
-      build job: "${APP_NAME}-Continuous-Integration(CI)", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]]
+      build job: "${APP_NAME}-Continuous-Integration(CI)", parameters: [[$class: 'StringParameterValue', name: 'GIT_BRANCH', value: "CI-${APP_NAME}"]], wait: false
       echo "${APP_NAME} CI pipeline: ${APP_NAME}-Continuous-Integration(CI) created."
     }
 
@@ -133,19 +133,5 @@ node('master') {
       echo "${APP_NAME} CD pipeline: ${APP_NAME}-Continuous-Delivery(CD) created."
     }
   }
-
-
-/*
-  stage ('Build Application Pipeline') {
-    sleep 10;
-    try {
-      // load the parameteres
-      build job: "${APP_NAME}-Continuous-Integration(CI)"
-    } catch (Exception e) {
-      sleep 5;
-      //starts the build
-      build job: "${APP_NAME}-Continuous-Integration(CI)"
-    }
-  }
-*/
+  
 }
