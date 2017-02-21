@@ -22,7 +22,7 @@ node('master') {
   def userInput
   def blueWeight
   def greenWeight
-  def abDeployment = false
+  def canaryDeployment = false
 
   try {
     notifyStarted()
@@ -94,10 +94,32 @@ node('master') {
       }
     }
 
+    stage('Staging Deployment Health Check') {
+      def retstat = 1
+      timeout (time: 5, unit: 'MINUTES') {
+        for (;retstat != 0;) {
+          retstat = sh(
+            script: """
+              curl -I "http://`oc get route <%= @app_name %>-rt -n ${stagingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>" | grep "HTTP/1.1 200"
+            """,
+            returnStatus: true)
+
+          if (retstat != 0) {
+            sleep 10
+          }
+        }
+      }
+
+      if (retstat != 0) {
+        echo "Health check to http://`oc get route <%= @app_name %>-rt -n ${stagingProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %> failed."
+        sh exit ${retstat}
+      }
+    }
+
     stage ('ZDD Production Deployment') {
       userInput = input(
-         id: 'userInput', message: 'ZDD A/B deployment or ZDD Rolling deployment?', parameters: [
-          [$class: 'ChoiceParameterDefinition', choices: 'ZDD A/B deployment\nZDD Rolling Deployment', description: 'ZDD A/B(inlcuding Blue/Green) Deployment or ZDD Rolling Deployment', name: 'DEPLOYMENT_TYPE'],
+         id: 'userInput', message: 'ZDD Canary deployment or ZDD Rolling deployment?', parameters: [
+          [$class: 'ChoiceParameterDefinition', choices: 'ZDD Canary deployment\nZDD Rolling Deployment', description: 'ZDD Canary Deployment or ZDD Rolling Deployment', name: 'DEPLOYMENT_TYPE'],
          ])
       withCredentials([
         [$class: 'UsernamePasswordMultiBinding', credentialsId: osCredentialId, usernameVariable: 'OS_USERNAME', passwordVariable: 'OS_PASSWORD']
@@ -124,7 +146,7 @@ node('master') {
             echo "Application liveness check URL: http://`oc get route ab-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
           """
         } else {
-          abDeployment = true
+          canaryDeployment = true
           sh """
             ${oc} tag --source=docker ${dockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${green}-<%= @app_name %>-is:latest --insecure
             sleep 5
@@ -134,24 +156,48 @@ node('master') {
         }
       }
     }
-    if (abDeployment) {
+
+    stage('Staging Deployment Health Check') {
+      def retstat = 1
+      def healthCheckUrl = "http://`oc get route ab-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+      if (canaryDeployment) {
+         healthCheckUrl = "http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+      }
+      timeout (time: 5, unit: 'MINUTES') {
+        for (;retstat != 0;) {
+          retstat = sh(script: 'curl -I ${healthCheckUrl} | grep "HTTP/1.1 200"', returnStatus: true)
+
+          if (retstat != 0) {
+            sleep 10
+          }
+        }
+      }
+
+      if (retstat != 0) {
+        echo "Health check to ${healthCheckUrl} failed."
+        sh exit ${retstat}
+      }
+    }
+
+
+    if (canaryDeployment) {
       stage ('Production ZDD Canary Deployment') {
         userInput = input(
          id: 'userInput', message: 'Production ZDD Canary Deployment?', parameters: [
-            [$class: 'StringParameterDefinition', defaultValue: '10', description: 'Green(Newly deployed) weight', name: 'GREEN_WEIGHT'],
-            [$class: 'StringParameterDefinition', defaultValue: '90', description: 'Blue(Existing deployment) weight', name: 'BLUE_WEIGHT'],
+            [$class: 'StringParameterDefinition', defaultValue: '10', description: 'New deployment weight', name: 'NEW_WEIGHT'],
+            [$class: 'StringParameterDefinition', defaultValue: '90', description: 'Existing deployment weight', name: 'EXISTING_WEIGHT'],
            ])
-        blueWeight = userInput['BLUE_WEIGHT']
-        greenWeight = userInput['GREEN_WEIGHT']
+        blueWeight = userInput['EXISTING_WEIGHT']
+        greenWeight = userInput['NEW_WEIGHT']
         withCredentials([
           [$class: 'UsernamePasswordMultiBinding', credentialsId: osCredentialId, usernameVariable: 'OS_USERNAME', passwordVariable: 'OS_PASSWORD']
         ]) {
           sh """
             ${oc} login ${osHost} -n ${productionProject} --username=${env.OS_USERNAME} --password=${env.OS_PASSWORD} --insecure-skip-tls-verify
             ${oc} set -n ${productionProject} route-backends ab-<%= @app_name %>-rt ${green}-<%= @app_name %>-svc=${greenWeight} ${blue}-<%= @app_name %>-svc=${blueWeight}
-            echo "Green liveness check URL: http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
-            echo "Blue liveness check URL: http://`oc get route ${blue}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
-            echo "Application liveness check URL: http://`oc get route ab-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+            echo "New deployment URL: http://`oc get route ${green}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+            echo "Existing deployment URL: http://`oc get route ${blue}-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
+            echo "Application advised URL: http://`oc get route ab-<%= @app_name %>-rt -n ${productionProject} -o jsonpath='{ .spec.host }'`<%= @liveness_path %>"
           """
         }
       }
@@ -159,7 +205,7 @@ node('master') {
       stage ('Production ZDD Go Live or Rollback') {
         userInput = input(
            id: 'userInput', message: 'Production ZDD Go Live or ZDD Rollback?', parameters: [
-            [$class: 'ChoiceParameterDefinition', choices: 'ZDD Go Live\nZDD Rollback', description: 'ZDD Go Live to Green or ZDD Rollback to Blue', name: 'GO_LIVE_OR_ROLLBACK'],
+            [$class: 'ChoiceParameterDefinition', choices: 'ZDD Go Live\nZDD Rollback', description: 'ZDD Go Live to new deployment or ZDD Rollback to existing deployment', name: 'GO_LIVE_OR_ROLLBACK'],
            ])
         withCredentials([
           [$class: 'UsernamePasswordMultiBinding', credentialsId: osCredentialId, usernameVariable: 'OS_USERNAME', passwordVariable: 'OS_PASSWORD']
