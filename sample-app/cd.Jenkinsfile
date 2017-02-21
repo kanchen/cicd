@@ -117,7 +117,7 @@ node('master') {
 
         if (userInput == "ZDD Rolling Deployment") {
           sh """
-            ${oc} tag --source=docker ${ockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
+            ${oc} tag --source=docker ${dockerRegistry}/<%= @app_name %>:${IMAGE_TAG} ${productionProject}/${blue}-<%= @app_name %>-is:latest --insecure
             sleep 5
             ${oc} import-image ${blue}-<%= @app_name %>-is --confirm --insecure -n ${productionProject} | grep -i "successfully"
             ${oc} set -n ${productionProject} route-backends ab-<%= @app_name %>-rt ${blue}-<%= @app_name %>-svc=100 ${green}-<%= @app_name %>-svc=0

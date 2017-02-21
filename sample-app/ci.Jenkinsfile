@@ -158,7 +158,7 @@ node('master') {
         }
       }
 
-      stage ('Destroy FT Environment in Openshift') {
+      stage ('Destroy Testing Environment') {
         //input message: "Delete Openshift Environment(Cleanup)?", ok: "Delete"
 
         withCredentials([
